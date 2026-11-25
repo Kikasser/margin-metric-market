@@ -110,9 +110,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="es">
-      <head>
-        <HeadContent />
-      </head>
+     <head>
+  <HeadContent />
+  <script
+    async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2189538164956745"
+    crossOrigin="anonymous"
+  />
+</head>
       <body>
         {children}
         <Scripts />
