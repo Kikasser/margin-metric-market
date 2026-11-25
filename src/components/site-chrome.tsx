@@ -1,4 +1,3 @@
-
 import { Link } from "@tanstack/react-router";
 
 export function SiteHeader() {
@@ -38,6 +37,9 @@ export function SiteFooter() {
           © {new Date().getFullYear()} BusinessCalc · Resultados orientativos, no constituyen asesoramiento financiero.
         </p>
         <div className="mt-4 flex flex-wrap gap-4">
+          <a href="/aviso-legal" className="hover:underline">
+            Aviso legal
+          </a>
           <a href="/privacidad" className="hover:underline">
             Política de privacidad y cookies
           </a>
@@ -49,3 +51,4 @@ export function SiteFooter() {
     </footer>
   );
 }
+
