@@ -108,11 +108,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    const id = "google-adsense-script";
+
+    if (document.getElementById(id)) return;
+
+    const script = document.createElement("script");
+    script.id = id;
+    script.async = true;
+    script.src =
+      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2189538164956745";
+    script.crossOrigin = "anonymous";
+
+    document.head.appendChild(script);
+  }, []);
+
   return (
     <html lang="es">
-     <head>
-      <HeadContent />
-    </head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {children}
         <Scripts />
