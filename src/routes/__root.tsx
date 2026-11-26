@@ -20,6 +20,9 @@ type ConsentWindow = Window & {
   dataLayer?: unknown[];
   googlefc?: {
     callbackQueue?: Record<string, () => void>[];
+    ConsentModePurposeStatusEnum?: {
+      CONSENT_MODE_PURPOSE_STATUS_GRANTED: number;
+    };
     getGoogleConsentModeValues?: () => {
       analyticsStoragePurposeConsentStatus: number;
     };
@@ -199,10 +202,13 @@ function RootShell({ children }: { children: ReactNode }) {
         const consent =
           w.googlefc?.getGoogleConsentModeValues?.();
 
-        // GRANTED = 1.
-        // No cargar Analytics si el consentimiento es
-        // desconocido, denegado o no está configurado.
-        if (consent?.analyticsStoragePurposeConsentStatus === 1) {
+        const granted =
+          w.googlefc?.ConsentModePurposeStatusEnum?.CONSENT_MODE_PURPOSE_STATUS_GRANTED;
+
+        if (
+          granted !== undefined &&
+          consent?.analyticsStoragePurposeConsentStatus === granted
+        ) {
           loadTagManager();
         }
       },
