@@ -13,6 +13,19 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+const ADSENSE_ID = "ca-pub-2189538164956745";
+const GTM_ID = "GTM-K2ZHS7DB";
+
+type ConsentWindow = Window & {
+  dataLayer?: unknown[];
+  googlefc?: {
+    callbackQueue?: Record<string, () => void>[];
+    getGoogleConsentModeValues?: () => {
+      analyticsStoragePurposeConsentStatus: number;
+    };
+  };
+};
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -146,29 +159,74 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-
-  // Cargar AdSense después de la hidratación de React.
   useEffect(() => {
-    const id = "google-adsense-script";
+    const w = window as ConsentWindow;
 
-    if (document.getElementById(id)) return;
+    if (document.getElementById("google-adsense-script")) {
+      return;
+    }
 
-    const script = document.createElement("script");
+    // Preparar la plataforma de consentimiento de Google.
+    w.dataLayer = w.dataLayer || [];
+    w.googlefc = w.googlefc || {};
+    w.googlefc.callbackQueue =
+      w.googlefc.callbackQueue || [];
 
-    script.id = id;
-    script.async = true;
-    script.src =
-      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2189538164956745";
-    script.crossOrigin = "anonymous";
+    // Cargar Tag Manager únicamente con consentimiento analítico.
+    const loadTagManager = () => {
+      if (document.getElementById("google-tag-manager")) {
+        return;
+      }
 
-    document.head.appendChild(script);
+      w.dataLayer?.push({
+        "gtm.start": new Date().getTime(),
+        event: "gtm.js",
+      });
+
+      const gtmScript = document.createElement("script");
+
+      gtmScript.id = "google-tag-manager";
+      gtmScript.async = true;
+      gtmScript.src =
+        "https://www.googletagmanager.com/gtm.js?id=" + GTM_ID;
+
+      document.head.appendChild(gtmScript);
+    };
+
+    // Esperar a que Google proporcione las señales de consentimiento.
+    w.googlefc.callbackQueue.push({
+      CONSENT_MODE_DATA_READY: () => {
+        const consent =
+          w.googlefc?.getGoogleConsentModeValues?.();
+
+        // GRANTED = 1.
+        // No cargar Analytics si el consentimiento es
+        // desconocido, denegado o no está configurado.
+        if (consent?.analyticsStoragePurposeConsentStatus === 1) {
+          loadTagManager();
+        }
+      },
+    });
+
+    // Cargar AdSense y su plataforma de consentimiento
+    // después de la hidratación de React.
+    const adsenseScript = document.createElement("script");
+
+    adsenseScript.id = "google-adsense-script";
+    adsenseScript.async = true;
+    adsenseScript.src =
+      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
+      ADSENSE_ID;
+
+    adsenseScript.crossOrigin = "anonymous";
+
+    document.head.appendChild(adsenseScript);
   }, []);
 
   return (
     <html lang="es">
       <head>
-
-        {/* Google Consent Mode v2: consentimiento inicial denegado */}
+        {/* Google Consent Mode v2 */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -184,12 +242,13 @@ function RootShell({ children }: { children: ReactNode }) {
                 'ad_personalization': 'denied',
                 'analytics_storage': 'denied'
               });
+
+              gtag('set', 'ads_data_redaction', true);
             `,
           }}
         />
 
         <HeadContent />
-
       </head>
 
       <body>
