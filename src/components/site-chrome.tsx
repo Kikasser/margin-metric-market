@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 export function SiteHeader() {
@@ -30,6 +31,27 @@ export function AdSlot() {
 }
 
 export function SiteFooter() {
+  const [openPrivacy, setOpenPrivacy] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    const w = window as Window & {
+      googlefc?: {
+        callbackQueue?: Record<string, () => void>[];
+        showRevocationMessage?: () => void;
+      };
+    };
+    const cmp = (w.googlefc ??= {});
+    let active = true;
+    (cmp.callbackQueue ??= []).push({
+      CONSENT_API_READY: () => {
+        if (active && typeof cmp.showRevocationMessage === "function") {
+          setOpenPrivacy(() => () => cmp.showRevocationMessage?.());
+        }
+      },
+    });
+    return () => { active = false; };
+  }, []);
+
   return (
     <footer className="border-t">
       <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
@@ -43,6 +65,11 @@ export function SiteFooter() {
           <a href="/privacidad" className="hover:underline">
             Política de privacidad y cookies
           </a>
+          {openPrivacy && (
+            <button type="button" onClick={openPrivacy} className="hover:underline">
+              Preferencias de privacidad
+            </button>
+          )}
           <a href="mailto:franvidalmartinezz@gmail.com" className="hover:underline">
             Contacto
           </a>
